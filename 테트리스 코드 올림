@@ -1,0 +1,783 @@
+#define UP 72
+#define DOWN 80
+#define LEFT 75
+#define RIGHT 77
+#define SPACE 32
+
+#define BKINDS 7
+#define BSIZE 4
+
+#define MAPX 12
+#define MAPY 21
+
+#define SPAWNDOWN -3
+
+#include <iostream>
+#include <conio.h>
+#include <Windows.h>
+#include<cstdlib>
+#include<ctime>
+#include <list> 
+
+using namespace std;
+
+//===========< 기본 세팅 >===========
+void gotoxy(int x, int y);      // 텍스트 좌표 설정
+/*   0~15번
+    // 0-검정, 1- 파랑색, 2-초록색, 3-옥색, 4-빨간색, 5-자주색, 6-노랑
+    // 7-흰색, 8-회색, 9-연한 파란색, 10-연한 초록색, 11- 연한 옥색
+    // 12-연한 빨간색, 13-연한 자주색, 14-연한 노란색, 15-진한 흰색
+*/
+void setColor(int color);       // 텍스트 색 설정
+void cursorOff();               // 커서 끄기
+void cursorOn();                // 커서 켜기
+union POS
+{
+    struct
+    {
+        int x;
+        int y;
+    };
+
+    int p[2];
+};
+
+// 0 : 빈공간 , 1 : 이동 블록 , 2 : 설치된 블록 , 3 : 맵
+
+// 블럭
+int blocks[BKINDS][BSIZE][BSIZE][BSIZE] =
+{
+    {
+        {
+            {0,0,0,0},
+            {0,1,1,0},
+            {0,1,1,0},
+            {0,0,0,0},
+        },
+        {
+            {0,0,0,0},
+            {0,1,1,0},
+            {0,1,1,0},
+            {0,0,0,0},
+        },
+        {
+            {0,0,0,0},
+            {0,1,1,0},
+            {0,1,1,0},
+            {0,0,0,0},
+        },
+        {
+            {0,0,0,0},
+            {0,1,1,0},
+            {0,1,1,0},
+            {0,0,0,0},
+        }
+    },      // ㅁ
+    {
+        {
+            {0,0,1,0},
+            {0,0,1,0},
+            {0,0,1,0},
+            {0,0,1,0},
+        },
+        {
+            {0,0,0,0},
+            {1,1,1,1},
+            {0,0,0,0},
+            {0,0,0,0},
+        },
+        {
+            {0,0,1,0},
+            {0,0,1,0},
+            {0,0,1,0},
+            {0,0,1,0},
+        },
+        {
+            {0,0,0,0},
+            {1,1,1,1},
+            {0,0,0,0},
+            {0,0,0,0},
+        }
+    },      // ㅣ
+    {
+        {
+            {0,0,0,0},
+            {0,0,1,1},
+            {0,1,1,0},
+            {0,0,0,0},
+        },
+        {
+            {0,0,1,0},
+            {0,0,1,1},
+            {0,0,0,1},
+            {0,0,0,0},
+        },
+        {
+            {0,0,0,0},
+            {0,0,1,1},
+            {0,1,1,0},
+            {0,0,0,0},
+        },
+        {
+            {0,0,1,0},
+            {0,0,1,1},
+            {0,0,0,1},
+            {0,0,0,0},
+        }
+    },      // ┘┌
+    {
+        {
+            {0,0,0,0},
+            {0,1,1,0},
+            {0,0,1,1},
+            {0,0,0,0},
+        },
+        {
+            {0,0,0,1},
+            {0,0,1,1},
+            {0,0,1,0},
+            {0,0,0,0},
+        },
+        {
+            {0,0,0,0},
+            {0,1,1,0},
+            {0,0,1,1},
+            {0,0,0,0},
+        },
+        {
+            {0,0,0,1},
+            {0,0,1,1},
+            {0,0,1,0},
+            {0,0,0,0},
+        }
+    },      // ㄱㄴ
+    {
+        {
+            {0,1,0,0},
+            {0,1,0,0},
+            {0,1,1,0},
+            {0,0,0,0},
+        },
+        {
+            {0,0,0,0},
+            {0,1,1,1},
+            {0,1,0,0},
+            {0,0,0,0},
+        },
+        {
+            {0,0,0,0},
+            {0,1,1,0},
+            {0,0,1,0},
+            {0,0,1,0},
+        },
+        {
+            {0,0,0,0},
+            {0,0,1,0},
+            {1,1,1,0},
+            {0,0,0,0},
+        }
+    },      // L
+    {
+        {
+            {0,0,0,0},
+            {0,0,1,0},
+            {0,0,1,0},
+            {0,1,1,0},
+        },
+        {
+            {0,0,0,0},
+            {1,0,0,0},
+            {1,1,1,0},
+            {0,0,0,0},
+        },
+        {
+            {0,1,1,0},
+            {0,1,0,0},
+            {0,1,0,0},
+            {0,0,0,0},
+        },
+        {
+            {0,0,0,0},
+            {0,1,1,1},
+            {0,0,0,1},
+            {0,0,0,0},
+        }
+    },      // ㄱ
+    {
+        {
+            {0,0,0,0},
+            {0,1,1,1},
+            {0,0,1,0},
+            {0,0,0,0},
+        },
+        {
+            {0,0,1,0},
+            {0,0,1,1},
+            {0,0,1,0},
+            {0,0,0,0},
+        },
+        {
+            {0,0,1,0},
+            {0,1,1,1},
+            {0,0,0,0},
+            {0,0,0,0},
+        },
+        {
+            {0,0,1,0},
+            {0,1,1,0},
+            {0,0,1,0},
+            {0,0,0,0},
+        }
+    },      // ㅗ
+};
+
+void StartTitle();                  // 타이틀 화면
+void GameOverTitle();               // 게임오버 화면
+
+void KeyInput();                    // 키 입력 함수
+void MapCheck(int value);           // 키 입력에 따른 이동 충돌 체크
+void RotBlock();                    // 키 입력에 따른 블록 회전
+
+void GameStartSetting();            // 게임 시작시 세팅
+void SpawnBlock();                  // 블록 생성
+
+void GameLoop();                    // 게임 루프
+void MapDelet();                    // 게임 맵 세팅
+void DrawBlock();                   // 블록 그리기
+void DrawMap();                     // 맵 그리기
+void AutoMove();                    // 블럭 강제 이동 및 충돌 체크
+void GameCheck();                   // 게임 줄 체크
+
+void InfoFunc();                    // 인게임 UI & 속도 조절
+
+//===========< 게임 설정 >===========
+int map[MAPY][MAPX] = { 0 };
+
+bool isGameRun = true;          // 게임오버 여부
+bool isBlockSpawn = true;       // 블록 스폰
+bool isSpaceDown = false;       //  스페이스바 눌렀을 시 충돌할때까지 반복
+POS pos;
+int nowBlock[BSIZE][BSIZE];     // 플레이어 블록
+int block_Kind;                 // 플레이어 블록 종류
+int nextBlock_Kind;             // 다음 플레이어 블록 번호
+int block_Rot;                  // 플레이어 블록 회전
+
+int score = 0;                  // 점수   
+int sleepTime = 300;            // 슬립 함수 딜레이
+
+int main()
+{
+    system("mode con cols=100 lines=30 | title 테트리스"); // 콘솔창 크기 및 제목 설정
+
+    cursorOff();
+    //StartTitle();
+
+    srand(static_cast<unsigned int>(time(NULL)));
+    nextBlock_Kind = rand() % BKINDS;
+    // 시작 시 블록 스폰
+    SpawnBlock();
+
+    // 시작시 맵 그리기 
+    MapDelet();
+    DrawMap();
+
+    while (isGameRun)
+    {
+        GameLoop();
+    }
+
+    GameOverTitle();
+}
+
+void gotoxy(int x, int y)
+{
+    COORD pos = { x, y };
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+}
+void setColor(int color)
+{
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+}
+void cursorOff() {
+    CONSOLE_CURSOR_INFO Information;
+    Information.dwSize = 1;
+    Information.bVisible = FALSE;
+
+    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &Information);
+}
+void cursorOn() {
+    CONSOLE_CURSOR_INFO Information;
+
+    Information.dwSize = 20;
+    Information.bVisible = TRUE;
+
+    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &Information);
+}
+
+void StartTitle()
+{
+    //22
+    setColor(4);
+    gotoxy(26, 8); printf("▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦");
+    gotoxy(26, 9); printf("▦                                        ▦");
+    gotoxy(26, 10); printf("▦                                        ▦");
+    gotoxy(26, 11); printf("▦              "); setColor(7);
+    gotoxy(42, 11); printf("지렁이키우기");      setColor(4);
+    gotoxy(54, 11); printf("              ▦");
+    gotoxy(26, 12); printf("▦                                        ▦");
+    gotoxy(26, 13); printf("▦                                        ▦");
+    gotoxy(26, 14); printf("▦                                        ▦");
+    gotoxy(26, 15); printf("▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦");
+
+    setColor(7);
+    gotoxy(34, 18); printf("계속하려면 아무키나 누르시오");
+
+    _getch();
+
+    system("cls");
+}
+void GameOverTitle()
+{
+    system("cls");
+
+    //22
+    setColor(4);
+    gotoxy(26, 8); printf("▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦");
+    gotoxy(26, 9); printf("▦                                        ▦");
+    gotoxy(26, 10); printf("▦                                        ▦");
+    gotoxy(26, 11); printf("▦          ");                     setColor(7);
+    gotoxy(42, 11); printf("게임    오버");                      setColor(4);
+    gotoxy(54, 11); printf("              ▦");
+
+    gotoxy(26, 12); printf("▦      ");                         setColor(7);
+    gotoxy(41, 12); printf("최종 점수 : %d", score);             setColor(4);
+    gotoxy(60, 12); printf("        ▦");
+
+    gotoxy(26, 13); printf("▦      ");                         setColor(7);
+    gotoxy(41, 13); printf("최종 단계 : %d", score / 10 + 1);    setColor(4);
+    gotoxy(60, 13); printf("        ▦");
+    gotoxy(26, 14); printf("▦                                        ▦");
+    gotoxy(26, 15); printf("▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦▦");
+
+    setColor(7);
+    gotoxy(34, 18); printf("계속하려면 아무키나 누르시오");
+
+    _getch();
+
+    system("cls");
+}
+
+void GameStartSetting()
+{
+    for (int i = 0; i < BSIZE; i++)
+    {
+        for (int j = 0; j < BSIZE; j++)
+        {
+            nowBlock[i][j] = blocks[block_Kind][block_Rot][i][j];
+        }
+    }
+    // 맵 세팅
+    for (int y = 0; y < MAPY; y++)
+    {
+        for (int x = 0; x < MAPX; x++)
+        {
+            if (x == 0 || y == MAPY - 1 || x == MAPX - 1)
+            {
+                map[y][x] = 3;
+                continue;
+            }
+            map[y][x] = 0;
+        }
+    }
+}
+
+// 블록 스폰
+void SpawnBlock()
+{
+    block_Rot = 0;
+
+    pos.x = 0;
+    pos.y = 0;
+
+    block_Kind = nextBlock_Kind;
+
+    //nowBlock에 저장되있는 블럭 넣어주기
+    for (int i = 0; i < BSIZE; i++)
+    {
+        for (int j = 0; j < BSIZE; j++)
+        {
+            nowBlock[i][j] = blocks[block_Kind][block_Rot][i][j];
+        }
+    }
+
+    // 맵에 플레이어 블럭 적용
+    for (int i = 0; i < BSIZE; i++)
+    {
+        for (int j = 0; j < BSIZE; j++)
+        {
+            map[SPAWNDOWN + i + pos.y][(MAPX / 2 - 2) + j + pos.x] = nowBlock[i][j];
+        }
+    }
+
+    nextBlock_Kind = rand() % BKINDS;
+    isBlockSpawn = false;
+}
+
+// 게임 루프
+void GameLoop()
+{
+    int times = 20;
+    for (int i = 0; i < times; i++)
+    {
+        MapDelet();
+
+        KeyInput();
+        MapDelet();
+
+        // 블럭 스폰이 참일 경우 블록 스폰 아닐 경우 블록 이동
+        if (isBlockSpawn)
+        {
+            SpawnBlock();
+        }
+        else
+        {
+            DrawBlock();
+        }
+        
+        DrawMap();
+        GameCheck();
+
+        InfoFunc();     // UI
+
+        Sleep(sleepTime / times);
+    }
+
+    AutoMove();
+    DrawMap();
+}
+
+// 맵 지우기
+void MapDelet()
+{
+    for (int y = 0; y < MAPY; y++)
+    {
+        for (int x = 0; x < MAPX; x++)
+        {
+            if (x == 0 || y == MAPY - 1 || x == MAPX - 1)
+            {
+                map[y][x] = 3;
+                continue;
+            }
+
+            if (map[y][x] == 1)
+            {
+                map[y][x] = 0;
+            }
+        }
+    }
+}
+
+// 키 입력
+void KeyInput()
+{
+    if (kbhit()) 
+    { // 1. 키보드 입력이 감지되면
+        int key = getch(); // 2. 아스키 코드 값을 가져오고
+        switch (key)
+        { // 3. 입력받은 키에 해당하는 동작을 수행한다.
+        case UP:
+            RotBlock();
+            break;
+        case DOWN:
+            AutoMove();
+            break;
+        case LEFT:
+            MapCheck(-1);
+            break;
+        case RIGHT:
+            MapCheck(1);
+            break;
+        case SPACE:
+            isSpaceDown = true;
+            while (isSpaceDown)
+            {
+                AutoMove();
+            }
+            break;
+        }
+    }
+    return;
+}
+
+// 플레이어 블록이 경계나, 다른 블록과 충돌했는지 여부
+void MapCheck(int value)
+{
+    // 맵에 플레이어 블록 적용
+    for (int y = 0; y < BSIZE; y++)
+    {
+        for (int x = 0; x < BSIZE; x++)
+        {
+            // 0까지 포함하면 공백이 보여서 0은 제거
+            if (nowBlock[y][x] == 0)
+            {
+                continue;
+            }
+
+            int temp = (MAPX / 2 - 2) + x + pos.x + value;
+            if (temp <= 0 || temp >= MAPX-1)
+            {
+                return;
+            }
+
+            //현재 높이에서 옆의 칸이 2 라면 리턴
+            int tempPos = map[SPAWNDOWN + 1 + y + pos.y][temp];
+            if (tempPos == 2)
+            {
+                return;
+            }
+        }
+    }
+
+    pos.x += value;
+}
+
+// 플레이어 블록 회전
+void RotBlock()
+{
+    int tempBlock[BSIZE][BSIZE];
+
+    int tempRot = block_Rot;
+    if (tempRot >= 3)
+    {
+        tempRot = 0;
+    }
+    else
+    {
+        tempRot++;
+    }
+
+    //nowBlock에 저장되있는 블럭 넣어주기
+    for (int i = 0; i < BSIZE; i++)
+    {
+        for (int j = 0; j < BSIZE; j++)
+        {
+            tempBlock[i][j] = blocks[block_Kind][tempRot][i][j];
+        }
+    }
+
+    // 맵에 플레이어 블럭 적용
+    for (int i = 0; i < BSIZE; i++)
+    {
+        for (int j = 0; j < BSIZE; j++)
+        {
+            if (tempBlock[i][j] == 0)
+            {
+                continue;
+            }
+
+            // 경계나 다른 블록에 충돌했다면 리턴
+            int temp = map[SPAWNDOWN + i + pos.y][(MAPX / 2 - 2) + j + pos.x];
+            if (temp == 2 || temp == 3)
+            {
+                return;
+            }
+        }
+    }
+
+    if (block_Rot >= 3)
+    {
+        block_Rot = 0;
+    }
+    else
+    {
+        block_Rot++;
+    }
+
+    MapDelet();     // 맵 지우기
+    DrawBlock();    // 플레이어 블록 그리기
+}
+
+// 블록 그리기 ( 이동과 회전 포함)
+void DrawBlock()
+{
+    //nowBlock에 저장되있는 블럭 넣어주기
+    for (int i = 0; i < BSIZE; i++)
+    {
+        for (int j = 0; j < BSIZE; j++)
+        {
+            nowBlock[i][j] = blocks[block_Kind][block_Rot][i][j];
+        }
+    }
+
+    // 맵에 플레이어 블록 적용
+    for (int i = 0; i < BSIZE; i++)
+    {
+        for (int j = 0; j < BSIZE; j++)
+        {
+            // 0까지 포함하면 공백이 보여서 0은 제거
+            if (nowBlock[i][j] == 0)
+            {
+                continue;
+            }
+
+            map[SPAWNDOWN + i + pos.y][(MAPX / 2 - 2) + j + pos.x] = nowBlock[i][j];
+        }
+    }
+}
+
+// 맵 그리기
+void DrawMap()
+{
+    for (int y = 0; y < MAPY; y++)
+    {
+        for (int x = 0; x < MAPX; x++)
+        {
+            if (map[y][x] == 0)
+            {
+                gotoxy(15 + x * 2, 5 + y); printf("  ");
+            }
+            else if (map[y][x] == 1)
+            {
+                gotoxy(15 + x * 2, 5 + y); printf("□");
+            }
+            else if (map[y][x] == 2)
+            {
+                gotoxy(15 + x * 2, 5 + y); printf("■");
+            }
+            else    // 3
+            {
+                gotoxy(15 + x * 2, 5 + y); printf("▒");
+            }
+        }
+    }
+}
+
+// 일정 간격마다 블록을 아랫쪽으로 이동
+void AutoMove()
+{
+    bool isGround = false;
+
+    // 맵에 플레이어 블럭 적용
+    for (int i = 0; i < BSIZE; i++)
+    {
+        for (int j = 0; j < BSIZE; j++)
+        {
+            // 0까지 포함하면 공백이 보여서 0은 제거
+            if (nowBlock[i][j] == 0)
+            {
+                continue;
+            }
+
+            //현재 높이에서 1칸 내린 곳이 바닥이거나, 다른 블록이라면....
+            int temp = map[SPAWNDOWN + 1 + i + pos.y][(MAPX / 2 - 2) + j + pos.x];
+            if (temp == 2 || temp == 3)
+            {
+                isGround = true;
+                break;
+            }
+        }
+    }
+
+    if (isGround)
+    {
+        for (int i = 0; i < BSIZE; i++)
+        {
+            for (int j = 0; j < BSIZE; j++)
+            {
+                // 0까지 포함하면 공백이 보여서 0은 제거
+                if (nowBlock[i][j] == 0)
+                {
+                    continue;
+                }
+                map[SPAWNDOWN + i + pos.y][(MAPX / 2 - 2) + j + pos.x] = 2;
+
+                // 스페이스바 충돌 탈출
+                isSpaceDown = false;
+                system("cls");
+            }
+        }
+        isBlockSpawn = true;
+    }
+    else
+    {
+        pos.y++;
+    }
+}
+
+// 만약 줄 만드는데 성공했다면 줄 제거
+void GameCheck()
+{
+    // 맵 넘어갈 시 게임오버
+    for (int x = 1; x < MAPX - 1; x++)
+    {
+        if (map[2][x] == 2)
+        {
+            isGameRun = false;
+        }
+    }
+
+    // 라인 만들었을 시 라인 제거
+    for (int y = 1; y < MAPY - 1; y++)
+    {
+        bool lineCheck = true;
+
+        for (int x = 1; x < MAPX - 1; x++)
+        {
+            if (map[y][x] != 2)
+            {
+                lineCheck = false;
+                break;
+            }
+        }
+
+        // 라인 지우기 실행
+        if (lineCheck)
+        {
+            score++;
+
+            // 걸린곳부터 1까지 반복
+            for (int y2 = y; y2 > 1; y2--)
+            {
+                for (int x2 = 1; x2 < MAPX - 1; x2++)
+                {
+                    // 위의 값을 나에게 넣기
+                    map[y2][x2] = map[y2 - 1][x2];
+                }
+            }
+        }
+    }
+}
+
+// 인게임 UI & 속도 조절
+void InfoFunc()
+{
+    // 단계에 따른 게임 속도 조절
+    if (sleepTime < 80)
+    {
+        sleepTime = 80;
+    }
+    else
+    {
+        sleepTime = 300 - ((score / 10) * 10);
+    }
+
+    // 10점당 1단계 상승
+    gotoxy(50, 5); printf("단계 : %d", score / 10 + 1);
+    gotoxy(50, 6); printf("점수 : %d", score);
+    gotoxy(50, 7); printf("속도 : %d", sleepTime);
+
+    gotoxy(50, 9); printf("다음 블록");
+    // 맵에 플레이어 블럭 적용
+    for (int i = 0; i < BSIZE; i++)
+    {
+        for (int j = 0; j < BSIZE; j++)
+        {
+            gotoxy(56 + (i * 2 * -1), 10 + j);
+
+            if (blocks[nextBlock_Kind][0][i][j] == 1)
+            {
+                printf("□");
+            }
+        }
+    }
+}
